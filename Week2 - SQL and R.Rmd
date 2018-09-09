@@ -1,0 +1,40 @@
+---
+title: "Week2 Assignment - SQL and R"
+author: "humbertohp"
+date: "September 8, 2018"
+output: html_document
+---
+
+# Installing required packages
+  
+```{r echo=FALSE}
+
+install.packages("RMySQL")
+library(RMySQL)
+library(DBI)
+library(ggplot2)
+
+```
+# Defining MySQL Instance connection and testing Database connectivity
+
+```{r echo=TRUE}
+
+movrevdb <- dbConnect(RMySQL::MySQL(), user='root', password='Pass@word1', dbname='moviereviews', host='localhost')
+dbListTables(movrevdb)
+
+```
+
+# Loading data into a dataframe and displaying data in R
+
+```{r echo=TRUE}
+
+query <- dbSendQuery(movrevdb, "select M.movieId, M.title, R.revId, R.revname, R.rating
+                     from movies M
+                     inner join reviewers R
+                     on M.movieId = R.movieId")
+
+movrev_df <- fetch(query)
+movrev_df
+ggplot(movrev_df, aes(x=rating)) + geom_bar() + labs(y = "# of Reviews", x = "Ratings", title = "Movie Reviews") + theme_bw()
+
+```

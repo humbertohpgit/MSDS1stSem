@@ -1,0 +1,72 @@
+## Week 1 Assignment - Loading Data into a Data Frame
+
+url <- 'https://raw.githubusercontent.com/humbertohpgit/MSDS1stSem/master/Mushrooms'
+mushrooms_df <- read.csv(url, header=FALSE, stringsAsFactors=FALSE)
+nrow(mushrooms_df )
+
+head(mushrooms_df)
+table(mushrooms_df$V1)
+#    e    p 
+# 4208 3916 
+newcolnames <- c("main_cat", "cap_shape", "cap_surface", "cap_color", "bruises", "odor", "gill_attachment", "gill_spacing", "gill_size", "gill_color", 
+                 "stalk_shape", "stalk_root", "stalk_surface_above_ring", "stalk_surface_below_ring", "stalk_color_above_ring", 
+                 "stalk_color_below_ring", "veil_type", "veil_color", "ring_number", "ring_type", "spore_print_color", 
+                 "population", "habitat")
+names(mushrooms_df) <- newcolnames
+
+mushrooms_df2 <- subset(mushrooms_df, select = c(main_cat, odor, spore_print_color, cap_color, habitat, population))
+head(mushrooms_df2)
+
+mushrooms_df2$main_cat[mushrooms_df2$main_cat == "e"] <- "Edible"
+## other way -> mushrooms_df2$main_cat <- replace(mushrooms_df2$main_cat, mushrooms_df2$main_cat=="e", "Edible")
+mushrooms_df2$main_cat[mushrooms_df2$main_cat == "p"] <- "Poisonous"
+table(mushrooms_df2$main_cat)
+
+mushrooms_df2$odor[mushrooms_df2$odor == "a"] <- "Almond"
+mushrooms_df2$odor[mushrooms_df2$odor == "l"] <- "Anise"
+mushrooms_df2$odor[mushrooms_df2$odor == "c"] <- "Creosote"
+mushrooms_df2$odor[mushrooms_df2$odor == "y"] <- "Fishy"
+mushrooms_df2$odor[mushrooms_df2$odor == "f"] <- "Foul"
+mushrooms_df2$odor[mushrooms_df2$odor == "m"] <- "Musty"
+mushrooms_df2$odor[mushrooms_df2$odor == "n"] <- "None"
+mushrooms_df2$odor[mushrooms_df2$odor == "p"] <- "Pungent"
+mushrooms_df2$odor[mushrooms_df2$odor == "s"] <- "Spicy"
+
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "k"] <- "Black"
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "n"] <- "Brown"
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "b"] <- "Buff"
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "h"] <- "Chocolate"
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "r"] <- "Green"
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "o"] <- "Orange"
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "u"] <- "Purple"
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "w"] <- "White"
+mushrooms_df2$spore_print_color[mushrooms_df2$spore_print_color == "y"] <- "Yellow"
+
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "n"] <- "Brown"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "b"] <- "Buff"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "c"] <- "Cinnamon"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "g"] <- "Gray"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "r"] <- "Green"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "p"] <- "Pink"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "u"] <- "Purple"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "e"] <- "Red"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "w"] <- "White"
+mushrooms_df2$cap_color[mushrooms_df2$cap_color == "y"] <- "Yellow"
+
+mushrooms_df2$habitat[mushrooms_df2$habitat == "g"] <- "Grasses"
+mushrooms_df2$habitat[mushrooms_df2$habitat == "l"] <- "Leaves"
+mushrooms_df2$habitat[mushrooms_df2$habitat == "m"] <- "Meadows"
+mushrooms_df2$habitat[mushrooms_df2$habitat == "p"] <- "Paths"
+mushrooms_df2$habitat[mushrooms_df2$habitat == "u"] <- "Urban"
+mushrooms_df2$habitat[mushrooms_df2$habitat == "w"] <- "Waste"
+mushrooms_df2$habitat[mushrooms_df2$habitat == "d"] <- "Woods"
+
+mushrooms_df2$population[mushrooms_df2$population == "a"] <- "Abundant"
+mushrooms_df2$population[mushrooms_df2$population == "c"] <- "Clustered"
+mushrooms_df2$population[mushrooms_df2$population == "n"] <- "Numerous"
+mushrooms_df2$population[mushrooms_df2$population == "s"] <- "Scattered"
+mushrooms_df2$population[mushrooms_df2$population == "v"] <- "Several"
+mushrooms_df2$population[mushrooms_df2$population == "y"] <- "Solitary"
+
+head(mushrooms_df2, 50)
+

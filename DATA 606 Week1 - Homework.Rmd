@@ -1,0 +1,184 @@
+---
+title: "DATA 606 - Week1 - Homework"
+author: "humbertohp"
+date: "September 16, 2018"
+output:
+  html_document:
+    highlight: pygments
+    theme: cerulean
+  pdf_document: default
+---
+
+#### 1.8 Smoking habits of UK residents. 
+
+A survey was conducted to study the smoking habits of UK residents. Below is a data matrix displaying a portion of the data collected in this survey. Note that "£" stands for British Pounds Sterling, "cig" stands for cigarettes, and "N/A" refers to a missing component of the data
+
+```{r, eval=TRUE}
+library("png")
+pp <- readPNG("SmokingUK.png")
+plot.new() 
+rasterImage(pp,0,0,1.1,1.1)
+```
+
+(a) What does each row of the data matrix represent?
+
+##### Represents an individual participating in the survey from which different data points have been collected: sex, age, marital status, gross income, smoker(y/n) and amount by weekends and weekdays
+
+(b) How many participants were included in the survey?
+
+##### 1691 participants
+
+(c) Indicate whether each variable in the study is numerical or categorical. If numerical, identify as continuous or discrete. If categorical, indicate if the variable is ordinal.
+
+##### Sex (categorical), age (numerical, discrete), marital (categorical), grossincome (numerical, continuous), smoker(categorical), amt weekdays & weekends (numerical, discrete)
+
+#### 1.10 Cheaters, scope of inference.
+
+Exercise 1.5 introduces a study where researchers studying the relationship between honesty, age, and self-control conducted an experiment on 160 children between the ages of 5 and 15. The researchers asked each child to toss a fair coin in private and to record the outcome (white or black) on a paper sheet, and said they would only reward children who report white. Half the students were explicitly told not to cheat and the others were not given any explicit instructions. Di???erences were observed in the cheating rates in the instruction and no instruction groups, as well as some di???erences across children's characteristics within each group. 
+
+(a) Identify the population of interest and the sample in this study.
+
+##### Children between the ages of 5 and 15. Sample 160 children
+
+(b) Comment on whether or not the results of the study can be generalized to the population, and if the ???ndings of the study can be used to establish causal relationships.
+
+##### The study can be generalized at a certain degree pivoting in the 2 groups: instructed and not instructed, then the corelation with other characteristics collected can be established, but not causation
+
+#### 1.28 Reading the paper. 
+
+Below are excerpts from two articles published in the NY Times:
+(a) An article titled Risks: Smokers Found More Prone to Dementia states the following:
+"Researchers analyzed data from 23,123 health plan members who participated in a voluntary exam and health behavior survey from 1978 to 1985, when they were 50-60 years old. 23 years later, about 25% of the group had dementia, including 1,136 with Alzheimer's disease and 416 with vascular dementia. After adjusting for other factors, the researchers concluded that pack-aday smokers were 37% more likely than nonsmokers to develop dementia, and the risks went up with increased smoking; 44% for one to two packs a day; and twice the risk for more than two packs." Based on this study, can we conclude that smoking causes dementia later in life? Explain your reasoning.
+
+##### According to the study, dementia is highly correlated with smoking and mainly with the amount consumed. It would be needed to further review the other factors that were adjusted for in order to get to that conclusion as correlation does not imply causation
+
+(b) Another article titled The School Bully Is Sleepy states the following:
+"The University of Michigan study, collected survey data from parents on each child's sleep habits and asked both parents and teachers to assess behavioral concerns. About a third of the students studied were identi???ed by parents or teachers as having problems with disruptive behavior or bullying. The researchers found that children who had behavioral issues and those who were identi???ed as bullies were twice as likely to have shown symptoms of sleep disorders." A friend of yours who read the article says, "The study shows that sleep disorders lead to bullying in school children." Is this statement justi???ed? If not, how best can you describe the conclusion that can be drawn from this study?
+
+##### According to the study, high correlation between behavioral issues (i.e bullying) and sleeping disorders was demonstrated, although causation cannot be extablished as it was not clear which one generates the other, plus, no other information or variables were described to further confirm or discard the phenomena
+
+#### 1.36 Exercise and mental health. 
+
+A researcher is interested in the e???ects of exercise on mental health and he proposes the following study: Use strati???ed random sampling to ensure representative proportions of 18-30, 31-40 and 41- 55 year olds from the population. Next, randomly assign half the subjects from each age group to exercise twice a week, and instruct the rest not to exercise. Conduct a mental health exam at the beginning and at the end of the study, and compare the results.
+(a) What type of study is this? 
+
+##### Test vs. Control Study
+
+(b) What are the treatment and control groups in this study? 
+
+##### Treatment-> Subjects exercising twice a week; Control ->Subjects not exercising
+
+(c) Does this study make use of blocking? If so, what is the blocking variable?
+
+##### Yes, Age
+
+(d) Does this study make use of blinding? 
+
+##### No, no other variable was mentioned that could have a confounding effect in the independent and dependent variables
+
+(e) Comment on whether or not the results of the study can be used to establish a causal relationship between exercise and mental health, and indicate whether or not the conclusions can be generalized to the population at large. 
+
+##### Yes, direct correlation and causality can be established thanks to the test vs control experiemnt but further variables should be included to account for important genetic and psycological influences in order to be generalized for a large population with different backgrounds and physical traits
+
+(f) Suppose you are given the task of determining if this proposed study should get funding. Would you have any reservations about the study proposal?
+
+##### Yes, the success would be subject to further collection of data about genetics and psychological data
+
+#### 1.48 Stats scores. 
+
+Below are the ???nal exam scores of twenty introductory statistics students.
+57, 66, 69, 71, 72, 73, 74, 77, 78, 78, 79, 79, 81, 81, 82, 83, 83, 88, 89, 94
+Create a box plot of the distribution of these scores. The ???ve number summary provided below may be useful.
+Min   Q1    Q2(Median)  Q3    Max
+57    72.5  78.5        82.5  94
+
+```{r, eval=TRUE}
+scores <- c(57, 66, 69, 71, 72, 73, 74, 77, 78, 78, 79, 79, 81, 81, 82, 83, 83, 88, 89, 94)
+summary(scores)
+boxplot(scores, col = 'blue')
+```
+
+#### 1.50 Mix-and-match. 
+
+```{r, eval=TRUE}
+library("png")
+pp <- readPNG("1.50 MixMatch.png")
+plot.new() 
+rasterImage(pp,0,0,1,1)
+```
+
+Describe the distribution in the histograms below and match them to the box plots.
+
+##### a) == 2) (Normal Distribution); b) == 3) (Multimodal Distribution); c) == 1) (Unimodal Distribution with a positive skew)
+
+#### 1.56 Distributions and appropriate statistics, Part II . 
+
+For each of the following, state whether you expect the distribution to be symmetric, right skewed, or left skewed. Also specify whether the mean or median would best represent a typical observation in the data, and whether the variability of observations would be best represented using the standard deviation or IQR. Explain your reasoning. 
+
+(a) Housing prices in a country where 25% of the houses cost below $350,000, 50% of the houses cost below $450,000, 75% of the houses cost below $1,000,000 and there are a meaningful number of houses that cost more than $6,000,000. 
+
+##### Distribution right-skewed, median and IQR would be better to represent the data due to the considerable variability between observations
+
+(b) Housing prices in a country where 25% of the houses cost below $300,000, 50% of the houses cost below $600,000, 75% of the houses cost below $900,000 and very few houses that cost more than $1,200,000. 
+
+##### Distribution symmetrical, mean and sd would be better to represent the data due to less variability between observations
+
+(c) Number of alcoholic drinks consumed by college students in a given week. Assume that most of these students don't drink since they are under 21 years old, and only a few drink excessively. 
+
+##### Distribution right-skewed, median and IQR would be better to represent the data due to the few outliers skewing the metrics
+
+(d) Annual salaries of the employees at a Fortune 500 company where only a few high level executives earn much higher salaries than the all other employees.
+
+##### Distribution right-skewed, median and IQR would be better to represent the data due to the few outliers skewing the metrics
+
+#### 1.70 Heart transplants. 
+
+The Stanford University Heart Transplant Study was conducted to determine whether an experimental heart transplant program increased lifespan. Each patient entering the program was designated an ocial heart transplant candidate, meaning that he was gravely ill and would most likely bene???t from a new heart. Some patients got a transplant and some did not. The variable transplant indicates which group the patients were in; patients in the treatment group got a transplant and those in the control group did not. Another variable called survived was used to indicate whether or not the patient was alive at the end of the study.
+
+```{r, eval=TRUE}
+library(openintro)
+data(heartTr)
+mosaicplot(table(heartTr$transplant,heartTr$survived))
+boxplot(heartTr$survtime ~ heartTr$transplant)
+```
+
+(a) Based on the mosaic plot, is survival independent of whether or not the patient got a transplant? Explain your reasoning.
+
+##### No, it is not independent. The survival rate is much higher for the treatment group, direct correlation and causation
+
+(b) What do the box plots below suggest about the ecacy (e???ectiveness) of the heart transplant treatment. 
+
+##### The survival time was considerably increased for the treatment group with a median (207 days) and the 3rd quartile and max numbers were very high (630 & 1799 respectively)
+
+```{r, eval=TRUE}
+summary(heartTr$survtime[heartTr$transplant == "treatment"])
+```
+(c) What proportion of patients in the treatment group and what proportion of patients in the control group died? 
+
+```{r, eval=TRUE}
+table(heartTr$survived, heartTr$transplant)
+```
+
+##### Proportion of dead for treatment = 45 of 69 (65%)
+##### Proportion of dead for control = 30 of 34 (88%)
+
+(d) One approach for investigating whether or not the treatment is e???ective is to use a randomization technique.
+i. What are the claims being tested?
+
+##### H0 - Patient survival rate and survival time are independent from the treatment, no correlation and a result from chance
+##### H1 - Patient survival rate and survival time are dependent on the treatment, correlation adn causation is determined
+
+ii. The paragraph below describes the set up for such approach, if we were to do it without using statistical software. Fill in the blanks with a number or phrase, whichever is appropriate. 
+
+We write alive on (**28**) cards representing patients who were alive at the end of the study, and dead on (**75**) cards representing patients who were not. Then, we shu???e these cards and split them into two groups: one group of size (**69**) representing treatment, and another group of size (**34**) representing control. We calculate the di???erence between the proportion of dead cards in the treatment and control groups (treatment - control) and record this value. We repeat this 100 times to build a distribution centered at (**0,0**). Lastly, we calculate the fraction of simulations where the simulated di???erences in proportions are (**Negative (meaning less deads in the treatment than the control)**). If this fraction is low, we conclude that it is unlikely to have observed such an outcome by chance and that the null hypothesis should be rejected in favor of the alternative. 
+
+iii. What do the simulation results shown below suggest about the e???ectiveness of the transplant program?
+
+```{r, eval=TRUE}
+library("png")
+pp <- readPNG("HrtTransplants.png")
+plot.new() 
+rasterImage(pp,0,0,1,1)
+```
+
+#### The results show more simulated differences in proportions on the negative side, which means less deads in the treatment-control proportion calculation, this definitely shows a strong correlation between transplant treatment and the reduction of deads (better survival rates)

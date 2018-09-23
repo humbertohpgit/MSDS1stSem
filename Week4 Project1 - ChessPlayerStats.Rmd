@@ -1,0 +1,115 @@
+---
+title: "Week4 Project1 - ChessPlayerStats"
+author: "humbertohp"
+date: "September 23, 2018"
+output:
+  html_document:
+    highlight: pygments
+    theme: cerulean
+---
+
+# Load data set from Github repo
+```{r, echo=TRUE}
+
+chess_raw <- read.delim("https://raw.githubusercontent.com/humbertohpgit/MSDS1stSem/master/chess_raw.txt", header = FALSE, sep = "\t", stringsAsFactors=FALSE)
+chess_raw
+is(chess_raw)
+
+library(stringr)
+
+```
+
+# Extract & format Full Names
+```{r, echo=TRUE}
+playernames <- data.frame(str_extract_all(chess_raw, "[[:upper:]]{3,} [[:upper:]]{1,} [[:upper:]]{0,}[ -][[:upper:]]{0,}"), stringsAsFactors=FALSE)
+playernamesfmt <- data.frame(lapply(playernames, function(x) paste(x, ",")), stringsAsFactors=FALSE)
+names(playernamesfmt) <- "PlayerName"
+playernamesfmt
+```
+
+
+# Extract & format States
+```{r, echo=TRUE}
+playerstates <- str_extract_all(chess_raw, "[[:upper:]]{2} \\|")
+playerstatesfmt <- data.frame(str_extract_all(playerstates, "[[:alpha:]]{2}"), stringsAsFactors=FALSE)
+playerstatesfmt2 <- data.frame(lapply(playerstatesfmt, function(x) paste(x, ",")), stringsAsFactors=FALSE)
+names(playerstatesfmt2) <- "PlayerState"
+playerstatesfmt2
+```
+
+# Extract & format Total Points
+```{r, echo=TRUE}
+playerpoints <- data.frame(str_extract_all(chess_raw, "[0-9]\\.[0-9]"), stringsAsFactors=FALSE)
+playerpointsfmt <- data.frame(lapply(playerpoints, function(x) paste(x, ",")), stringsAsFactors=FALSE)
+names(playerpointsfmt) <- "PlayerPoints"
+playerpointsfmt
+```
+
+# Extract & format Pre-Rating
+```{r, echo=TRUE}
+playerprerating <- str_extract_all(chess_raw, "R:[[:space:]]{1,}[[:alnum:]]{3,}[[:space:]]{0,}")
+playerpreratingfmt <- data.frame(str_extract_all(playerprerating, " [[:alnum:]]{3,}"), stringsAsFactors=FALSE)
+playerpreratingfmt2 <- data.frame(lapply(playerpreratingfmt, function(x) paste(x, ",")), stringsAsFactors=FALSE)
+names(playerpreratingfmt2) <- "PlayerPreRating"
+playerpreratingfmt2
+```
+
+# Extract and Calculate Avg. Pre Rating of Opponents
+## Extract Opponents for each Player
+```{r, echo=TRUE}
+opps <- str_extract_all(chess_raw, "\\|[1-6]\\.[0-5]  \\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|")
+opps2 <- str_extract_all(opps, "\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|[WDLHUBX][[:print:]]{1,4}\\|")
+opps2 <- data.frame(opps2, stringsAsFactors=FALSE)
+names(opps2) <- "Opps"
+opps3 <- lapply(opps2, function(x) str_extract_all(x, "[[:digit:]]{1,2}"))
+opps3
+```
+## Build table of PreRatings for each Player/Opponent
+```{r, echo=TRUE}
+plyrpreratcalc <- data.frame(str_extract_all(playerprerating, " [[:digit:]]{3,}"), stringsAsFactors=FALSE)
+plyrpreratcalcfmt <- data.frame(cbind(c(1:64), plyrpreratcalc))
+names(plyrpreratcalcfmt) <- c("Player", "PlayerPreRating")
+plyrpreratcalcfmt$PlayerPreRating <- as.numeric(plyrpreratcalcfmt$PlayerPreRating)
+plyrpreratcalcfmt
+```
+## Build table of Opponents for each Player
+```{r, echo=TRUE}
+opps5 <- c(0,0)
+for(i in 1:64){
+opps4 <- data.frame(cbind(i, as.numeric(opps3$Opps[[i]])))
+opps5 <- rbind(opps5, opps4)
+}
+names(opps5) <- c("Player", "Opps")
+opps5 <- opps5[-1,]
+opps5
+```
+## Map Pre Ratings for each Player's Opponents
+```{r, echo=TRUE}
+library(dplyr)
+opps6 <- opps5 %>% left_join(plyrpreratcalcfmt, by = c("Opps" = "Player"))
+opps6
+```
+## Calculate Avg. Opponent Pre Rating (and give format for final merge)
+```{r, echo=TRUE}
+oppsavgprerating <- summarise(group_by(opps6,Player), mean(PlayerPreRating))
+names(oppsavgprerating) <- c("Player", "OppsAvgPreRating")
+oppsavgpreratingfmt <- oppsavgprerating[,-1]
+oppsavgpreratingfmt
+```
+
+# Build the final dataframe including all the data points (columns) calculated: PlayerName, PlayerState, PlayerPoints, PlayerPreRating, OppsAvgPreRating
+```{r, echo=TRUE}
+player_df <- cbind(playernamesfmt, playerstatesfmt2, playerpointsfmt, playerpreratingfmt2, oppsavgpreratingfmt)
+str(player_df)
+head(player_df,1)
+player_df
+```
+
+# Write the final result set to a CSV file
+```{r, echo=TRUE}
+setwd("C:/DATA/HHP/Personal/Degrees/Ms. Data Science (CUNY)/R Working Dir")
+write.csv(player_df, "ChessPlayerStats.csv", row.names = TRUE)
+```
+
+
+

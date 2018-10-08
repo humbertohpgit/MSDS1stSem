@@ -1,0 +1,204 @@
+---
+title: "Week6 Project2 - Tyding and Transfroming Three Datasets"
+author: "humbertohp"
+date: "October 6, 2018"
+output:
+  html_document:
+    theme: cerulean
+    fig_width: 7
+    fig_height: 8
+---
+
+## Fruits & Vegetables Prices and Calorie Guidelines
+
+#### How much do fruits and vegetables cost? Economic Research Service estimated average prices for over 150 commonly consumed fresh and processed fruits and vegetables. Reported estimates include each product's average retail price per pound and per edible cup equivalent (the unit of measurement for Federal recommendations for fruit and vegetable consumption). For many fruits and vegetables, a 1-cup equivalent equals the weight of enough edible food to fill a measuring cup. ERS calculated average prices at retail stores using 2013 and 2016 retail scanner data from Information Resources, Inc. (IRI). A selection of retail establishments-grocery stores, supermarkets, supercenters, convenience stores, drug stores, and liquor stores-across the U.S. provides IRI with weekly retail sales data (revenue and quantity). 
+#### ERS reports average prices per edible cup equivalent to inform policymakers and nutritionists about how much money it costs Americans to eat a sufficient quantity and variety of fruits and vegetables. Every five years the Departments of Agriculture and Health and Human Services release a new version of the Dietary Guidelines for Americans with information about how individuals can achieve a healthy diet. However, the average American falls short in meeting these recommendations. Many people consume too many calories from refined grains, solid fats, and added sugars, and do not eat enough whole grains, fruits, and vegetables.
+#### Are food prices a barrier to eating a healthy diet? ERS research using this data set shows that, in 2013, it was possible for a person on a 2,000-calorie diet to eat a sufficient quantity and variety of fruits and vegetables for about $2.10 to $2.60 per day. The report also illustrates the variety of fruits and vegetables affordable to a family on a limited budget
+
+### Analysis of the Impact on Food Caloric Intake and Costs of substituting certain groups of Snacks with certain categories of Fruits & Vegetables
+
+### Installing and Loading necessary packages
+```{r, echo=TRUE}
+#install.packages("dplyr")
+#install.packages("tidyr")
+#install.packages("readxl")
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(readxl)
+library(ggplot2)
+```
+
+## 1st Data set - Calorie Intake Impact on Snack Substitution
+
+### Load data set (CSV) into R
+#### Download target file locally from github "caloricimpacts (untidy dataset).xls"
+```{r, echo=TRUE}
+setwd("C:/DATA/HHP/Personal/Degrees/Ms. Data Science (CUNY)/R Working Dir")
+calorieimpact_raw <- data.frame(read_excel("caloricimpacts (untidy dataset).xls", skip = 1, col_names = TRUE))
+dim(calorieimpact_raw)
+```
+
+### Data Wrangling
+
+#### Elminating Headers, Footers and Calculated columns
+
+```{r, echo=TRUE}
+calorieimpact_raw <- calorieimpact_raw[-(22:26),]
+calorieimpact_raw <- calorieimpact_raw[,-23]
+calorieimpact_raw <- calorieimpact_raw[-1,]
+```
+
+#### Pivoting columns to a key column and Renaming columns
+```{r, echo=TRUE}
+calorieimpact <- gather(calorieimpact_raw, "FruitVeg", "DiffCalories", 3:22)
+names(calorieimpact) <- c("Snack", "SnackCalories", "FruitVeg", "DiffCalories")
+head(calorieimpact,22)
+```
+
+#### Casting data types, creating calculated-columns, arranging column layout
+```{r, echo=TRUE}
+calorieimpact$SnackCalories <- as.numeric(calorieimpact$SnackCalories)
+calorieimpact$DiffCalories <- as.numeric(calorieimpact$DiffCalories)
+calorieimpact <- mutate(calorieimpact, FruitVegCalories = SnackCalories-DiffCalories)
+avgCalChgbyFruitVeg <- summarise(group_by(calorieimpact, FruitVeg), AvgCalChgbyFruitVeg = round(mean(DiffCalories)))
+calorieimpact <- calorieimpact %>% inner_join(avgCalChgbyFruitVeg, by = c("FruitVeg"))
+calorieimpactfinal <- select(calorieimpact, Snack, SnackCalories, FruitVeg, FruitVegCalories, AvgCalChgbyFruitVeg, DiffCalories)
+head(calorieimpactfinal,22)
+```
+
+### Analysis of the calorie intake impact of substituting Snacks with Fruits/Vegetables
+```{r, fig.width= 11, fig.height=11, echo=TRUE}
+ggplot(calorieimpactfinal, aes(x=DiffCalories, y=Snack, colour = FruitVeg)) + geom_point() + facet_wrap(~FruitVeg) + labs(y = "Snack", x = "Differential of Calories Snack vs Fruit/Vegetable", title = "Analysis of the calorie intake impact of substituting Snacks with Fruits/Vegetables") + theme_bw()
+```
+
+######       (Values < 0 mean calorie intake increase due to substitution)
+
+#### Conclusion: With the exception of very few cases like: Sweet Potatoes, Raisins & Apple Sauce, the calorie intake is substantially decreased when substituting Snacks with Fruits/Vegetables
+
+## 2nd Data set - Cost Impact on Snack Substitution
+
+### Load data set (CSV) into R
+#### Download target file locally from github "costimpacts (untidy dataset).xls"
+```{r, echo=TRUE}
+setwd("C:/DATA/HHP/Personal/Degrees/Ms. Data Science (CUNY)/R Working Dir")
+costimpact_raw <- data.frame(read_excel("costimpacts (untidy dataset).xls", skip = 1, col_names = TRUE))
+dim(costimpact_raw)
+```
+
+### Data Wrangling
+
+#### Elminating Headers, Footers and Calculated columns
+```{r, echo=TRUE}
+costimpact_raw <- costimpact_raw[-(22:25),]
+costimpact_raw <- costimpact_raw[,-23]
+costimpact_raw <- costimpact_raw[-1,]
+```
+
+#### Pivoting columns to a key column and Renaming columns
+```{r, echo=TRUE}
+costimpact <- gather(costimpact_raw, "FruitVeg", "DiffCost", 3:22)
+names(costimpact) <- c("Snack", "SnackCost", "FruitVeg", "DiffCost")
+head(costimpact,22)
+```
+
+#### Casting data types, creating calculated-columns, arranging column layout
+```{r, echo=TRUE}
+costimpact$SnackCost <- as.numeric(format(costimpact$SnackCost, nsmall = 2))
+costimpact$DiffCost <- as.numeric(format(costimpact$DiffCost, nsmall = 2))
+costimpact <- mutate(costimpact, FruitVegCost = SnackCost-DiffCost)
+totCostchgbyFruitVeg <- summarise(group_by(costimpact, FruitVeg), TotCostChgbyFruitVeg = sum(DiffCost))
+costimpact <- costimpact %>% inner_join(totCostchgbyFruitVeg, by = c("FruitVeg"))
+costimpactfinal <- select(costimpact, Snack, SnackCost, FruitVeg, FruitVegCost, TotCostChgbyFruitVeg, DiffCost)
+head(costimpactfinal,22)
+```
+
+### Analysis of the cost impact of substituting Snacks with Fruits/Vegetables
+```{r, fig.width= 10, fig.height=10, echo=TRUE}
+ggplot(costimpactfinal, aes(x=DiffCost, y=Snack, colour = FruitVeg)) + geom_point() + facet_wrap(~FruitVeg)+ labs(y = "Snack", x = "Differential of Cost Snack vs Fruit/Vegetable ", 
+        title = "Analysis of the cost impact of substituting Snacks with Fruits/Vegetables") + theme_bw()
+```
+
+######        (Values < 0 mean cost increase due to subsitution)
+
+```{r, echo=TRUE}
+ggplot(costimpactfinal, aes(y = FruitVeg, x = TotCostChgbyFruitVeg)) + geom_point(aes(col=FruitVeg, size=TotCostChgbyFruitVeg)) + labs(y = "Fruit/Vegetable", x = "Total Cost Replacing all Snacks with specific Fruit/Veg", 
+        title = "Total Cost of Replacing all Snacks with a specific Fruit/Vegetable") + theme_bw()
+```
+
+######        (Values < 0 mean cost increase due to subsitution)
+
+#### Conclusion: With the exception of very few cases like: Red Peppers, Tangerines & Tomatoes, the cost is substantially decreased when substituting Snacks with Fruits/Vegetables. Some of the best savings contributors are: Celery, Carrots, Broccoli & Bananas
+
+
+## 3rd Data set - United Nations Migration Data
+
+### Load data set (CSV) into R and eliminate headers
+#### Download target file locally from github "UN_MigrantStockByOriginAndDestination_2017.xlsx"
+```{r, echo=TRUE}
+setwd("C:/DATA/HHP/Personal/Degrees/Ms. Data Science (CUNY)/R Working Dir")
+migration_raw <- data.frame(read_excel("UN_MigrantStockByOriginAndDestination_2017.xlsx", sheet = "Table 1", skip = 15, col_names = TRUE))
+dim(migration_raw)
+head(migration_raw,1)
+```
+
+### Data Wrangling
+
+#### Elminating irrelevant columns, including totals
+```{r, echo=TRUE}
+migration_raw <- migration_raw[,-2]
+migration_raw <- migration_raw[,-(3:6)]
+```
+
+#### Pivoting columns to a key column and Renaming columns
+```{r, echo=TRUE}
+migration <- gather(migration_raw, "CountryOrig", "MigrantStock", 3:236)
+names(migration) <- c("Year", "CountryDest", "CountryOrig", "MigrantStock")
+head(migration,5)
+```
+
+#### Casting data types and filtering NAs and certain summary categories like: World, Developed, High Income Regions, Continents & Subcontinents, etc.
+```{r, echo=TRUE}
+str(migration)
+migration$MigrantStock <- as.numeric(migration$MigrantStock)
+migration_final <- migration %>% filter(!is.na(MigrantStock))
+migration_final <- migration_final %>% filter(!str_detect(CountryDest,"regions|countries|WORLD"))
+migration_final <- migration_final %>% filter(!str_detect(CountryDest,"ASIA|AFRICA|EUROPE|LATIN|CARIBBEAN|OCEANIA|Central|Eastern|Western|Southern|Northern|NORTHERN|Other|Sub"))
+migration_final <- migration_final %>% filter(!str_detect(CountryOrig,"Other"))
+head(migration_final,10)
+```
+
+#### Preparing datasets for Ranking Top CountryDest and CountryOrigin by MigrationStock
+```{r, echo=TRUE}
+TopCountryDest <- summarise(group_by(migration_final, CountryDest), MigrantStock=sum(MigrantStock)) %>% arrange(desc(MigrantStock)) %>% head(., 20)
+TopCountryOrig <- summarise(group_by(migration_final, CountryOrig), MigrantStock=sum(MigrantStock)) %>% arrange(desc(MigrantStock)) %>% head(., 20)
+```
+
+#### Preparing dataset for Migration by CountryDest over time
+```{r, echo=TRUE}
+TopCountryDestOT <- summarise(group_by(migration_final, CountryDest, Year), MigrantStock=sum(MigrantStock)) %>% arrange(desc(MigrantStock)) %>% filter(str_detect(CountryDest,"United States of America|Russia|Germany|Saudi|France|United Kingdom|Canada|Australia|India|New Zealand|Ukraine|United Arab|Pakistan|Italy|Spain|Iran|China"))
+```
+
+### Analysis of the Migration Patterns
+
+#### Most Attractive Countries for Immigrants
+```{r, echo=TRUE}
+ggplot(TopCountryDest, aes(x=reorder(CountryDest, MigrantStock), y=MigrantStock, fill=CountryDest)) + geom_col(position = "dodge") + coord_flip() + labs(y = "Migration Stock", x = "Destination Country", title = "Most Attractive Countries for Immigrants") + theme(axis.text.y=element_blank())
+```
+
+#### Top Countries by # of Migrants
+```{r, echo=TRUE}
+ggplot(TopCountryOrig, aes(x=reorder(CountryOrig, MigrantStock), y=MigrantStock, fill=CountryOrig)) + geom_col(position = "dodge") + coord_flip() + labs(y = "Migration Stock", x = "Origin Country", title = "Top Countries by # of Migrants") + theme(axis.text.y=element_blank())
+```
+
+#### MigrationStock over the Years for Top Destination Countries
+```{r, fig.width= 10, fig.height=10, echo=TRUE}
+ggplot(TopCountryDestOT, aes(x=Year, y=MigrantStock, group=CountryDest)) + geom_line(aes(color=CountryDest)) + geom_point(aes(color=CountryDest)) + labs(y = "Migration Stock", x = "Year", title = "MigrationStock over the Years for Top Destination Countries") + theme_bw() 
+```
+
+##### Faceted View
+```{r, fig.width= 10, fig.height=10, echo=TRUE}
+ggplot(TopCountryDestOT, aes(x=Year, y=MigrantStock, group=CountryDest)) + geom_line(aes(color=CountryDest)) + geom_point(aes(color=CountryDest)) + facet_wrap(~CountryDest) + labs(y = "Migration Stock", x = "Year", title = "MigrationStock over the Years for Top Destination Countries") + theme_bw()
+```
+
+#### Conclusion: The United States of America stays as the top destination country for immigrants WW with a linear growth over the last four decades. Ukraine, Pakistan, India, China and Iran experiencing a decline or a flat trend. Developed countries and economies like: UK, UAE, Canada, Australia, France and Germany, showing a steady growth trend over the last decades. Saudi Arabia showing up with an almost linear growth rate during the last two decades

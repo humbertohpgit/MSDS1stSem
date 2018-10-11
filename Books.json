@@ -1,0 +1,24 @@
+{"books" :[
+	{
+	"title" : "Freakonomics",
+	"authors" : ["Steven D. Levitt", "Stephen J. Dubner"],
+	"attribute1" : "Data",
+	"attribute2" : "Economics",
+	"attribute3" : "Analytics"
+	},
+	{
+	"title" : "The Information",
+	"authors" : ["James Gleick"],
+	"attribute1" : "Data",
+	"attribute2" : "Information Technology",
+	"attribute3" : "Evolution"
+	},
+	{
+	"title" : "Data Science for Business",
+	"authors" : ["Foster Provost", "Tom Fawcett"],
+	"attribute1" : "Data and Business",
+	"attribute2" : "Analytic Thinking",
+	"attribute3" : "Innovation"
+	}
+]
+}

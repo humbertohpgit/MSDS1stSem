@@ -1,0 +1,59 @@
+---
+title: "Week7 Assignment - Web Data"
+author: "humbertohp"
+date: "October 10, 2018"
+output:
+  html_document:
+    theme: cerulean
+---
+
+### Installing and Loading necessary packages
+```{r, echo=TRUE}
+#install.packages("XML")
+#install.packages("jsonlite")
+#install.packages("RJSONIO")
+#install.packages("RCurl")
+#install.packages("htmltab")
+library(XML)
+library(jsonlite)
+library(RJSONIO)
+library(RCurl)
+library(httr)
+library(plyr)
+library(htmltab)
+```
+
+
+### Load HTML file to a data frame
+```{r, echo=TRUE}
+url_html <- c("https://raw.githubusercontent.com/humbertohpgit/MSDS1stSem/master/Books.html")
+html_file <- getURL(url_html) ## RCurl package
+html_df <- htmltab(doc = html_file)
+class(html_df)
+html_df
+```
+
+### Load XML file to a data frame
+```{r, echo=TRUE}
+url_xml <- c("https://raw.githubusercontent.com/humbertohpgit/MSDS1stSem/master/Books.xml")
+xml_file <- GET(url_xml) ## httr package
+xml_data <- xmlParse(xml_file)
+class(xml_data)
+topxml <- xmlRoot(xml_data)
+topxml <- xmlSApply(topxml, 
+                    function(x) xmlSApply(x, xmlValue))
+xml_df <- data.frame(t(topxml),
+                     row.names=NULL)
+xml_df
+```
+
+### Load JSON file to a data frame
+```{r, echo=TRUE}
+isValidJSON("https://raw.githubusercontent.com/humbertohpgit/MSDS1stSem/master/Books.json")
+json_data <- fromJSON(content = "https://raw.githubusercontent.com/humbertohpgit/MSDS1stSem/master/Books.json")
+class(json_data)
+json_df <- do.call("rbind", lapply(json_data[[1]], data.frame, stringsAsFactors = FALSE))
+json_df
+```
+
+#### HTML and XML data frames are identical. JSON data frame is very similar except that for books with more than one author, it creates different rows as the number of authors per book

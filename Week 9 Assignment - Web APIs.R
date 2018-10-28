@@ -1,0 +1,38 @@
+#install.packages("httr")
+library(httr)
+library(jsonlite)
+library(knitr)
+
+## Books API - Provides information about books reviews and the New York Times bestsellers lists
+
+## Using jsonlite library - NYT Top 5 Bestsellers (October, 2018)
+
+api_key <- "&api-key=9507c7df7afe48a08c9d07886b7f97d4"
+url_j <- "http://api.nytimes.com/svc/books/v2/lists/overview.json?"
+pub_date <- "published_date=2018-10-01"
+request_j <- fromJSON(paste0(url_j, pub_date, api_key))
+bsellers_lists <- request_j$results$list
+bsellers_books <- bsellers_lists[[1, "books"]]
+bsellers_df <- subset(bsellers_books, select = c("title", "author", "description", "rank"))
+class(bsellers_df)
+kable(bsellers_df,  format = "html", caption = "NYT Top 5 Bestsellers")
+
+## Using httr library - Bestsellers History for a specific author
+
+url_h <- "https://api.nytimes.com/svc/books/v3/lists/best-sellers/history.json?author=Dan+Brown"
+request_h <- GET(url_h, add_headers(api_key="9507c7df7afe48a08c9d07886b7f97d4"))
+http_status(request_h)
+bsellers_hist <- content(request_h, "parsed")
+num_results <- as.numeric(bsellers_hist$num_results)
+bsellers_results <- bsellers_hist$results
+
+### Unnamed second level returned in the r list (after "results" json object array), Logic implemented to extract Bestseller Title and Description
+bsellers_titles <- data.frame("","")
+colnames(bsellers_titles) <- c("Title", "Description")
+for (i in 1:num_results){
+bsellers_titles_temp <- do.call("cbind", lapply(bsellers_results[[i]][1:2], data.frame, stringsAsFactors = FALSE))
+colnames(bsellers_titles_temp) <- c("Title", "Description")
+bsellers_titles <- rbind(bsellers_titles, bsellers_titles_temp)
+}
+class(bsellers_titles)
+kable(bsellers_titles,  format = "html", caption = "NYT Bestsellers by Dan Brown")

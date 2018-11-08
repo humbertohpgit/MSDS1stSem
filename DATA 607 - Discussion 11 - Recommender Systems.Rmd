@@ -1,0 +1,61 @@
+---
+title: "DATA 607 - Discussion 11 - Recommender Systems"
+author: "humbertohp"
+date: "November 7, 2018"
+output:
+  html_document:
+    highlight: pygments
+    theme: cerulean
+---
+
+## Discussion 11 - Recommender Systems
+### Tasks:
+- Analyze an existing recommender system that you find interesting
+- Perform a Scenario Design analysis.  Consider whether it makes sense for your selected recommender system to perform scenario design twice, once for the organization (e.g. Amazon.com) and once for the organization's customers.
+- Attempt to reverse engineer what you can about the site, from the site interface and any available information that you can find on the Internet or elsewhere.
+- Include specific recommendations about how to improve the site's recommendation capabilities going forward. 
+
+### Recommender System
+
+The Netflix Recommender System
+
+### Target Users
+
+Approximately 80+ million members looking to streaming video content in Netflix collection of movies and TV shows
+
+### What are the key goals?
+
+Net???ix lies at the intersection of the Internet and storytelling. We are inventing Internet television. Our main product and source of revenue is a subscription service that allows members to stream any video in our collection of movies and TV shows at any time on a wide range of Internet-connected devices. Members stream more than 100 million hours of movies and TV shows per day. The Internet television space is young and competition is ripe, thus innovation is crucial. 
+
+A key pillar of our product is the recommender system that helps our members ???nd videos to watch in every session. Our recommender system is not one algorithm, but rather a collection of different algorithms serving different use cases that come together to create the complete Net???ix experience.
+
+
+### How can the application help them accomplish their goals?
+
+We seek to grow our business on an enormous scale, that is, becoming a producer and distributor of shows and movies with a fully global reach. We develop and use our recommender system because we believe that it is core to our business for a number of reasons. 
+
+Our recommender system helps us win moments of truth: when a member starts a session and we help that member ???nd something engaging within a few seconds, preventing abandonment of our service for an alternative entertainment option.
+
+Personalization enables us to ???nd an audience even for relatively niche videos that would not make sense for broadcast TV models because their audiences would be too small to support signi???cant advertising revenue, or to occupy a broadcast or cable channel time slot. This is very evident in our data, which show that our recommender system spreads viewing across many more videos much more evenly than would an unpersonalized system. We introduce a speci???c metric: the effective catalog size (ECS) is a metric that describes how spread viewing is across the items in our catalog. If most viewing comes from a single video, it will be close to 1. If all videos generate the same amount of viewing, it is close to the number of videos in the catalog.
+
+Personalization allows us to signi???cantly increase our chances of success when offering recommendations. One metric that gets at this is the take rate - the fraction of recommendations offered resulting in a play. The lift in take-rate that we get from recommendations is substantial. But, most important, when produced and used correctly, recommendations lead to meaningful increases in overall engagement with the product (e.g., streaming hours) and lower subscription cancellations rates. Our subscriber monthly churn is in the low single-digits, and much of that is due to payment failure, rather than an explicit subscriber choice to cancel service. Over years of development of personalization and recommendations, we have reduced churn by several percentage points. Reduction of monthly churn both increases the lifetime value of an existing subscriber, and reduces the number of new subscribers we need to acquire to replace cancelled members. We think the combined effect of personalization and recommendations save us more than $1B per year
+
+The Netflix Recommender System:
+- Personalized Video Ranker: PVR
+- Top-N Video Ranker
+- Trending Now
+- Continue Watching
+- Video-Video Similarity
+- Page Generation: Row Selection and Ranking
+- Evidence
+- Search
+
+### Reverse Engineering
+
+Based on the number of capabilities described above, it would be extremely hard to reverse engineer the system. However, anything is possible with the right amount and quality of data. It has already been done (https://netflixprize.com/), even though the scope was much more limited
+
+### Recommendations about how to improve the site's recommendation capabilities going forward
+
+- The system primarily assists with customer retention by performing A/B tests randomly assigning different member to different experiences (called cells). It would be interesting to leverage those capabilities to find a model for cutomer acquisition where its results eventually feed and refines the core for retention
+- Perform offline experiments
+- Feedback loop - feed into the system the results and impact of successful recommendations (clusters of members responding similarly to different recommendations or infusing more randomness to improve model learning)

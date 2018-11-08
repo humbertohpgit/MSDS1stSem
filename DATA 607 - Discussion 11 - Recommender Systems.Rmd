@@ -25,7 +25,7 @@ Approximately 80+ million members looking to streaming video content in Netflix 
 
 ### What are the key goals?
 
-Net???ix lies at the intersection of the Internet and storytelling. We are inventing Internet television. Our main product and source of revenue is a subscription service that allows members to stream any video in our collection of movies and TV shows at any time on a wide range of Internet-connected devices. Members stream more than 100 million hours of movies and TV shows per day. The Internet television space is young and competition is ripe, thus innovation is crucial. 
+Netflix lies at the intersection of the Internet and storytelling. We are inventing Internet television. Our main product and source of revenue is a subscription service that allows members to stream any video in our collection of movies and TV shows at any time on a wide range of Internet-connected devices. Members stream more than 100 million hours of movies and TV shows per day. The Internet television space is young and competition is ripe, thus innovation is crucial. 
 
 A key pillar of our product is the recommender system that helps our members find videos to watch in every session. Our recommender system is not one algorithm, but rather a collection of different algorithms serving different use cases that come together to create the complete Netflix experience.
 

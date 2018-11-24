@@ -1,0 +1,129 @@
+---
+title: "Week12 Assignment - NoSQL Data Store"
+author: "humbertohp"
+date: "November 23, 2018"
+output:
+  html_document:
+    theme: cerulean
+---
+
+```{r, echo=TRUE}
+
+```
+## NoSQL Data Stores
+#### Take information from a relational database and migrate it to a NoSQL database of your own choosing. For the relational database, you might use the flights database, the tb database, the "data skills" database your team created for Project 3, or another database of your own choosing or creation.
+#### For the NoSQL database, you may use MongoDB (which we introduced in week 7), Neo4j, or another NoSQL database of your choosing.
+#### Migration process needs to be reproducible.  R code is encouraged, but not required.  Briefly describe the advantages and disadvantages of storing the data in a relational database vs. your NoSQL database.
+
+```{r, echo=TRUE}
+#install.packages("RMySQL")
+#install.packages("rmongodb")
+#install.packages("mongolite")
+library(RMySQL)
+library(DBI)
+library(mongolite)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+```
+
+### Source data store: Flights database in MySQL RDBMS
+
+### Connect to MySQL, extract and load 3 tables into R data frames
+```{r, echo=TRUE}
+flightsdb <- dbConnect(RMySQL::MySQL(), user='root', password='Pass@word1', dbname='flights', host='localhost')
+dbListTables(flightsdb)
+q_airl <- dbSendQuery(flightsdb, "select * from airlines")
+airlines_df <- fetch(q_airl)
+dbClearResult(dbListResults(flightsdb)[[1]])
+q_airp <- dbSendQuery(flightsdb, "select * from airports limit 500")
+airports_df <- fetch(q_airp)
+dbClearResult(dbListResults(flightsdb)[[1]])
+q_flight <- dbSendQuery(flightsdb, "select * from flights limit 500")
+flights_df <- fetch(q_flight)
+
+# Manage connections and resultsets
+# dbListConnections( dbDriver( drv = "MySQL"))
+# dbClearResult(dbListResults(flightsdb))
+```
+
+
+### Target data store : MongoDB Community Edition (Local instance installation)
+
+### Insert data into MongoDB local instance. Create connection, database and collections
+#### Airlines
+```{r, echo=TRUE}
+mgo_airlines = mongo(collection = "airlines", db = "flights")
+mgo_airlines$insert(airlines_df)
+```
+
+#### Airports
+```{r, echo=TRUE}
+mgo_airports = mongo(collection = "airports", db = "flights")
+mgo_airports$insert(airports_df)
+```
+
+#### Flights
+```{r, echo=TRUE}
+mgo_flights = mongo(collection = "flights", db = "flights")
+mgo_flights$insert(flights_df)
+```
+
+
+### Querying data from the flights collection
+```{r, echo=TRUE}
+mgo_flights$iterate()$one() # first record in the collection
+mgo_flights$find(paste('{"arr_delay" :{"$gt" : 80}}'))  %>% kable() # flights with an arrival delay > 80mins
+```
+
+
+### Join flights and airlines collections
+```{r, echo=TRUE}
+mgo_flights$aggregate('[
+                          {"$match" : {"arr_delay" :{"$gt" : 120}}},
+                          {
+                           "$project":
+                           {
+                            "_id" :0
+                           }
+                          },
+                          {
+                            "$lookup":
+                            {
+                            "from": "airlines",
+                            "localField": "carrier",
+                            "foreignField": "carrier",
+                            "as": "airline_name"
+                            }
+                          },
+                          {"$unwind" : "$airline_name"},
+                          {
+                           "$project":
+                           {
+                            "airline_name._id" :0, "airline_name.carrier":0
+                           }
+                          }
+                      ]') %>% kable()
+```
+
+
+### Bar plot of number of fligts by carrier
+```{r, echo=TRUE}
+mgo_flights$aggregate('[{"$group":{"_id":"$carrier", "Count": {"$sum":1}}}]') %>% arrange(desc(Count))%>% 
+  ggplot(aes(x=reorder(`_id`,Count),y=Count))+geom_bar(stat="identity",color='skyblue')+coord_flip()+xlab("Carriers")+ theme_bw()
+```
+
+
+### NoSQL DB vs Relational DB
+
+#### NoSQL Data stores provide the following main advantages:
+
+#### 1) Data models - Flexible and multi-model types: Document, Key-value, Wide-columns and graph. No predefined schemas required which allow for large volumes of rapidly changing structured, semi-structured and unstructured data
+#### 2) Performance and Scaling - Distributed scale-out architecture with auto-sharding and natively replicated. Horizontally scaled by adding capacity over commodity servers (instead of expensive, monolithic architectures)
+#### 3) Development - Object-oriented programming model, quick schema iterations and frequest code pushes
+
+#### NoSQL Data stores provide the following main disadvantages:
+
+#### 1) Data redundancy - Most of the NoSQL do not require or adopt data normalization
+#### 2) Data Consistency - Poor support for ACID transactions, most NoSQL DBs rely on principles of eventual consistenty (BASE)
+#### 3) Maturity & Security - Lack of advanced security and data manipulation features compared to relational data stores

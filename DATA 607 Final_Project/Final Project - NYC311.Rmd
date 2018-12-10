@@ -1,0 +1,367 @@
+---
+title: "Final Project NYC311"
+author: "Humberto Hernandez (humbertohp)"
+date: "December 8, 2018"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    highlight: tango
+    theme: cerulean
+---
+
+```{r,  echo=TRUE}
+
+```
+
+## Final Project: NYC 311 Service
+
+#### NYC311's mission is to provide the public with quick, easy access to all New York City government services and information while offering the best customer service. We help Agencies improve service delivery by allowing them to focus on their core missions and manage their workload efficiently. We also provide insight to improve City government through accurate, consistent measurement and analysis of service delivery. NYC311 is available 24 hours a day, 7 days a week, 365 days a year. We work to make government services accessible for all
+#### https://www1.nyc.gov/311/our-story.page
+
+### Project Goal
+#### NYC311 Service Requests & Resolution Analysis - Text Mining
+#### Explore and analyze NYC311 Service requests (historical data sets) to understand diverse patterns, regular themes and trends, as well as community satisfaction levels and sentiment pulse (social network feeds) derived from resolution categories and timing.
+
+### Data Sources
+#### NYC Open Data API - https://dev.socrata.com/foundry/data.cityofnewyork.us/fhrw-4uyv
+#### NYC311 Twitter: https://twitter.com/nyc311 - NYC311 is your source for New York City non-emergency government services. Account monitored 24/7. User policy: http://on.nyc.gov/1evyJgB 
+
+## Data Science Workflow
+
+```{r lib, message=FALSE, echo=TRUE}
+library(plyr) #loading plyr first then dplyr as there are conflicts in execution if done otherwise
+library(tidyverse)
+library(knitr)
+```
+
+### Data Acquisition
+
+#### NYC OpenData API
+
+##### Getting SR History using the JSON API and load it into a data frame - 150,000 SRs
+```{r API, message=FALSE, echo=TRUE}
+library(jsonlite)  
+
+api_tkn <- "$$app_token=ZHxqxXyUSoZlBvzxpZsTT9QjG"
+api_endpoint <- "https://data.cityofnewyork.us/resource/fhrw-4uyv.json?"
+api_limit <- "&$limit=150000"
+#api_filter <- "&borough=BRONX"
+request_json <- fromJSON(paste0(api_endpoint, api_tkn, api_limit))
+class(request_json)
+colnames(request_json)
+nrow(request_json)
+head(request_json,1)
+```
+
+### Data Exploration
+
+#### Most common complaint types (top 50)
+```{r most-compl, fig.width= 10, fig.height=10, message=FALSE, echo=TRUE}
+#library(tidyverse)
+
+dataset <- request_json
+ggplot(subset(dataset, complaint_type %in% count(dataset, complaint_type, sort=T)[1:50,]$complaint_type), aes(complaint_type)) + 
+  geom_histogram(stat = "count") +
+  labs(x="Complaint Type", y="Service Requests") +
+  coord_flip() + theme_bw()
+```
+
+#### Most common complaint types by borough and status
+
+```{r most-compl-borough-stat, fig.width= 18, fig.height=16, echo=TRUE}
+
+dataset_qckfilt <- subset(dataset, complaint_type %in% count(dataset, complaint_type, sort=T)[1:50,]$complaint_type)
+nrow(dataset_qckfilt)
+dataset_qckfilt <- dataset_qckfilt %>% select(complaint_type, borough, status) 
+ggplot(dataset_qckfilt, aes(x=status, y = complaint_type )) +
+  geom_point() +
+  geom_count() + 
+  facet_wrap(~borough)
+```
+
+### Service Request Resolutions Tidying and Analysis - Using Tidytext
+
+#### Most frequent words used in NYC311 Service Requests
+
+```{r tidytxt, fig.width= 10, fig.height=10, message=FALSE, echo=TRUE}
+library(tidytext)
+
+data(stop_words)
+tokenized_resolutions <- dataset %>%
+  select(complaint_type, descriptor, street_name, city, due_date, resolution_description, borough, open_data_channel_type) %>%
+  filter(!str_detect(borough, "Unspecified")) %>% 
+  unnest_tokens(word, resolution_description) %>%
+  anti_join(stop_words) %>%
+  group_by(borough, word) %>%
+  tally()
+
+tokenized_resolutions %>% glimpse()
+
+tokenized_resolutions %>%
+  group_by(borough) %>%
+  top_n(25) %>%
+  arrange(desc(n)) %>%
+  ggplot(aes(x = reorder(word, n), y = n, fill = factor(borough))) +
+  geom_bar(stat = "identity") +
+  theme(legend.position = "none") +
+  facet_wrap(~borough, scales = "free") + 
+  coord_flip() +
+  labs(x = "Words",
+       y = "Frequency",
+       title = "Top words used in NYC311 Service Requests by Borough",
+       subtitle = "")
+```
+
+#### Determining terms/words truly characteristic for SRs by Borough leveraging textmining (TF-IDF)
+
+```{r tf-itdf, echo=TRUE}
+tf_idf_words <- tokenized_resolutions %>%
+  bind_tf_idf(word, borough, n) %>%
+  arrange(desc(tf_idf))
+tf_idf_words
+```
+
+#### Cleaning up the tf_idf data set from irrelevant or obvious words affecting the analysis
+
+```{r tf-itdf-cln, echo=TRUE}
+tf_idf_words_cln <- tf_idf_words %>% filter(!str_detect(word, "[[:digit:]]+")) %>% 
+                filter(!str_detect(word, "[[:punct:]]+")) %>%
+                filter(!str_detect(word, "bronx|brooklyn|manhattan|queens|staten island"))
+```
+
+#### Presenting characterisitc terms/words for SRs by Borough
+
+```{r rep-tf-itdf, fig.width= 10, fig.height=10, echo=TRUE}
+tf_idf_words_cln %>% 
+  top_n(25) %>%
+  arrange(desc(tf_idf)) %>%
+  ggplot(aes(x = reorder(word, tf_idf), y = tf_idf, fill = borough)) +
+  geom_col() +
+  labs(x = "Words", y = "tf-idf",
+       title = "Distinctive words used in NYC311 Service Requests by Borough",
+       subtitle = "") +
+  coord_flip() +
+  theme(legend.position = "none") +
+  facet_wrap(~ borough, scales = "free")
+```
+
+### Map Analysis
+
+#### Preparing and tidying up the data for map plotting
+
+```{r map-prep, echo=TRUE}
+dataset_map <- subset(dataset, complaint_type %in% count(dataset, complaint_type, sort=T)[1:50,]$complaint_type)
+dataset_map <- dataset_map %>% select(complaint_type, borough, latitude, longitude) %>% drop_na()
+
+#library(plyr)
+counts <- ddply(dataset_map, .(complaint_type), "count")
+counts_filtered <- filter(counts, freq > 80)
+counts_filtered$freq <- as.numeric(counts_filtered$freq)
+counts_filtered$longitude <- as.numeric(counts_filtered$longitude)
+counts_filtered$latitude <- as.numeric(counts_filtered$latitude)
+```
+
+#### Map Plotting
+
+```{r map-plot, message=FALSE, echo=TRUE}
+#install.packages("rworldmap")
+#install.packages("rworldxtra")
+
+library(rworldmap)
+library(rworldxtra)
+
+newmap <- getMap(resolution = "high")
+#nyc_coorflimits <- data.frame( long = c(-74.5, -73.5), lat = c(40.5, 41), stringsAsFactors = FALSE)
+
+nyc <- ggplot() + geom_polygon(data = newmap, aes(x=long, y = lat, group = group), fill = "gray", color = "blue")  + xlim(-74.5, -73.5) + ylim(40.5, 41)
+
+nyc_SRs <- nyc + 
+  geom_point(data=counts_filtered, aes(longitude, latitude, size=freq), colour="red")  + 
+#  facet_wrap(~complaint_type, scales = "free") + (Working on the console, not working on RMarkdown)
+  labs(x = "Longitude", y = "Latitude", title = "Highest Number of SRs by Complaint Type") + scale_size(name="# of SRs")
+nyc_SRs
+```
+
+##### Map with facets not working in RMarkdown. Image of the Map Plot as it appears in the RStudio Console
+
+```{r, ig.width= 14, fig.height=10, eval=TRUE}
+library("png")
+pp <- readPNG("MapSRsbyComplType.png")
+plot.new() 
+rasterImage(pp,0,0,1,1)
+```
+
+### Service Request Resolutions Tidying and Analysis - Using TM
+```{r, message=FALSE, echo=TRUE}
+library(tm)
+library(wordcloud)
+```
+
+#### Filtering dataset to the most relevant Complaint Types
+```{r, echo=TRUE}
+dataset_filt <- subset(dataset, complaint_type %in% count(dataset, complaint_type, sort=T)[1:50,]$complaint_type)
+sr_resolution <- dataset_filt$resolution_description
+```
+
+#### Cleaning up non-standard characters (encoding conversion)
+```{r, echo=TRUE}
+sr_resolution_cln <- sr_resolution %>% iconv("latin1", "ASCII")
+control <- list(stopwords=TRUE, removePunctuation=TRUE, removeNumbers=TRUE, minDocFreq=5) # stemming=TRUE does not provide much value
+```
+
+#### Creating Corpus and TDM
+```{r, echo=TRUE}
+sr_corpus <- VCorpus(VectorSource(sr_resolution_cln))
+sr_tdm <- TermDocumentMatrix(sr_corpus, control)
+sr_tdm
+```
+
+#### Removing sparse terms (80% of sparse percentage of empty)
+```{r, echo=TRUE}
+sr_tdm_unsprsd <- removeSparseTerms(sr_tdm, 0.8)
+sr_tdm_unsprsd
+```
+
+#### Top terms by frequency (mentioned at least 50 times)
+```{r, echo=TRUE}
+length(findFreqTerms(sr_tdm_unsprsd,50))
+sr_topterms <- findFreqTerms(sr_tdm_unsprsd,50)
+sr_topterms
+```
+
+#### Find top associations for the top terms (lower correlation limit of 0.4). More consistent term association patterns found in service requests
+```{r, echo=TRUE}
+sr_topterms <- sr_topterms[!is.na(sr_topterms)]
+sr_assocs <- findAssocs(sr_tdm_unsprsd, sr_topterms[1:5], 0.4) 
+lapply(sr_assocs, function(x) kable(x))
+```
+
+#### Creating a WordCloud for the top terms/words in the SRs
+```{r wrdcld, echo=TRUE}
+library(wordcloud)
+sr_tdm_cloud <- as.matrix(sr_tdm_unsprsd)
+v <- sort(rowSums(sr_tdm_cloud),decreasing=TRUE)
+d <- data.frame(word=names(v),freq=v)	
+wordcloud(d$word,d$freq,max.words=50, min.freq=10, colors=brewer.pal(8, 'Dark2'))
+```
+
+## NYC311 Tweets Analysis
+### Data Collection and Exploration
+
+##### devtools::install_github("mkearney/rtweet") # Latest working version of rtweet, this is preferred version to use
+
+#### API Set-up (Application Name and security context). Commands commented and keys masked
+
+```{r, message=FALSE, echo=TRUE}
+library(rtweet)
+
+##appname <- "nyc311sentiment_analysis"
+## key <- "12345678901234567890"
+##secret <- "12345678901234567890abcdefghijk"
+# create token named "twitter_token"
+##twitter_token <- rtweet::create_token(app = appname,
+##                                      consumer_key = key,
+##                                      consumer_secret = secret)
+
+##home_directory <- "C:/DATA/HHP/Personal/Degrees/Ms. Data Science (CUNY)/R Working Dir"
+##file_name <- file.path(home_directory,
+##                       "twitter_token.rds")
+## save token to home directory
+##saveRDS(twitter_token, file = file_name)
+
+## create and save environment variable
+##cat(paste0("TWITTER_PAT=", file_name),
+##    file = file.path(home_directory, ".Renviron"),
+##    append = TRUE)
+```
+
+#### Search and collect 1000 tweets doing any mention to the "nyc311" service (hashtag, user, follower, etc.)
+
+```{r get-twts, echo=TRUE}
+nyc311_tweets <- search_tweets("nyc311", n = 1000, include_rts = FALSE)
+
+head(nyc311_tweets$text,5) %>% kable()
+```
+
+#### Sample of Users tweeting about "nyc311"
+
+```{r get-usrs, echo=TRUE}
+nyc311_users <- users_data(nyc311_tweets) %>% unique()
+kable(head(head(nyc311_users[,c(3,4,8,9)])))
+```
+
+#### Plot "nyc311" Tweets Time series (Last 7-9 days)
+```{r plot-twts-ts, echo=TRUE}
+ts_plot(nyc311_tweets, "24 hours", col=c("blue")) + theme_minimal() + theme(plot.title = ggplot2::element_text(face = "bold")) + labs(x = "Date", y = "# of Tweets", title = "NYC311 Tweets in the last 7 days")
+```
+
+### Sentiment Analysis - Syuzhet Package
+#### 'Syuzhet' breaks the text/words into 10 different emotions - anger, anticipation, disgust, fear, joy, sadness, surprise, trust, negative and positive.
+
+#### Determine "nyc311" Tweet's Emotions
+
+```{r, message=FALSE, echo=TRUE}
+#devtools::install_github("mjockers/syuzhet")
+library(syuzhet)
+
+nyc311_tweets_txt <- as.vector(nyc311_tweets$text)
+emotion_df <- get_nrc_sentiment(nyc311_tweets_txt)
+twt_emotion_df <- cbind(nyc311_tweets_txt, emotion_df) 
+kable(head(twt_emotion_df,3))
+```
+
+#### Sentiment Scoring
+
+```{r, echo=TRUE}
+sent.value <- get_sentiment(nyc311_tweets_txt)
+```
+
+#### Positive Tweets
+```{r, echo=TRUE}
+positive.tweets <- nyc311_tweets_txt[sent.value > 0]
+kable(head(positive.tweets,5))
+```
+
+#### Most Positive Tweet
+```{r, echo=TRUE}
+most.positive <- nyc311_tweets_txt[sent.value == max(sent.value)]
+most.positive
+```
+
+#### Negative Tweets
+```{r, echo=TRUE}
+negative.tweets <- nyc311_tweets_txt[sent.value < 0]
+kable(head(negative.tweets,5))
+```
+
+#### Most Negative Tweet
+```{r, echo=TRUE}
+most.negative <- nyc311_tweets_txt[sent.value <= min(sent.value)] 
+most.negative 
+```
+
+#### Neutral Tweets
+```{r, echo=TRUE}
+neutral.tweets <- nyc311_tweets_txt[sent.value == 0]
+kable(head(neutral.tweets,5))
+```
+
+#### Total Tweets by Sentiment (Using plotly package)
+```{r plotly, message=FALSE, echo=TRUE}
+#install.packages("plotly")
+library(plotly)
+category_sent <- ifelse(sent.value < 0, "Negative", ifelse(sent.value > 0, "Positive", "Neutral"))
+totals <- data.frame(table(category_sent))
+plot_ly(totals, labels = ~category_sent, values = ~Freq, type = 'pie',  textinfo = 'label+percent') %>% layout(title = 'NYC311 Tweets by Sentiment')
+```
+
+## Conclusion
+##### Based on all the analyses performed, the NYC311 Service represents a very popular and reliable channel and resource for the NYC communities to raise awareness to the local agencies and citizen services providers about multiple topics of importance and well-being for the society. I was able to identify overall themes and topics affecting the main boroughs within the NY Metro area but more importantly, I was able to narrow down characteristic themes and patterns that were more prevalent in each one, providing an idea of the specific challenges, needs and local dynamics each borough community experiments on a quotidian basis.
+##### In terms of Sentiment Analysis for the "nyc311" tweets, the majority of them describe a positive or neutral sentiment (~67%), surprisingly not a considerable number of complaints or negative mentions being raised leveraging the Twitter channel and also, the NYC311 service uses it to provide resolution advice, status and redirection guidance to its users/followers.
+
+
+#### Issues faced during the creation of this Analytics project
+##### 1) API Data Ingestion Limits - The NYC Open Data API started limiting the number of records I was able to retrieve. Initially, I was able to collect 500,000 records with no issues then while running my final report in R MArkdown, I started getting execution exceptions/errors that forced me to reduce the dataset to 150,000 records
+##### 2) Map plotting in RMarkdown - My code to plot maps of the NYC area with SR statistics overlayed into multiple facets by complaint type worked perfectly in the RStudio Console. Once I tried the code within R Markdown it threw an exception/error not supporting facets and not overlaying SR statistics. I added a picture of the correct plot right after the affected code section as a reference. I would welcome advice on how to solve this
